@@ -191,22 +191,26 @@ function App() {
   }
 
   async function loadData() {
-    await loadDistrust()
-
     let myFollows = window.myFollows
     let profiles = window.profiles
 
-    Object.keys(myFollows).forEach(k => {
-      let f = myFollows[k]
-      f.mutedBy.forEach(u => {
-        if (profiles[u]) profiles[k]?.distrust.add('muted by ' + profiles[u].name)
-      })
-      f.reportedBy.forEach(u => {
-        if (profiles[u]) profiles[k]?.distrust.add('reported by ' + profiles[u].name)
+    let users = Object.keys(window.myFollows)
+    let filters = [{
+      kinds: [1],
+      authors: users,
+      since: Math.floor(Date.now() / 1000) - 60 * 60 * .25,
+      //until: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 3,
+    }]
+    let events = await pool.list(getReadRelays(), filters)
+    console.log('events', events)
+    events.forEach(e => {
+      profiles[e.pubkey]?.distrust.add({
+        content: e.content,
+        event: nip19.noteEncode(e.id)
       })
     })
     setContacts(c => {
-      console.log('contacts', c)
+      //console.log('contacts', c)
       console.log('filtered', [...c].filter(c => c.distrust.size))
       return [...c].filter(c => c.distrust.size)
     })
@@ -229,7 +233,9 @@ function App() {
               </Link>
               {' '}{c.name}
               {[...c.distrust].map(d => <div key={d}>
-                <small><small>{d}</small></small>
+                <small className='note'><small>
+                  <a target='_blank' href={'https://snort.social/e/' + d.event}>{d.content}</a>
+                </small></small>
               </div>)}
               <p/>
             </div>)}

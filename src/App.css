@@ -3,7 +3,7 @@
 }
 
 .container {
-  width: 500px;
+  width: 1500px;
 }
 
 .App-logo {
@@ -43,4 +43,14 @@
 
 a {
   color: #fff;
+}
+
+.note {
+  display: block;
+  border: 1px solid #ccc;
+  padding: 12px;
+}
+
+small a {
+  text-decoration: none;
 }
