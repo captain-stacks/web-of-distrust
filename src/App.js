@@ -27,7 +27,7 @@ function App() {
     'wss://relay.current.fyi',
     'wss://nostr.shroomslab.net',
     'wss://relayable.org',
-    'wss://nostr.thank.eu',
+    'wss://nostr.thank.eu'
   ].map(r => [r, {read: true, write: true}]))
 
   useEffect(() => {
