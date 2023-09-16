@@ -102,6 +102,7 @@ function App() {
         c.npub = nip19.npubEncode(e.pubkey)
         c.name = c.displayName || c.name
         c.distrust = new Set()
+        c.followers = 0
         contacts.push(c)
         profiles[e.pubkey] = c
       } catch (e) {
@@ -175,19 +176,31 @@ function App() {
       kinds: [1984],
       authors: users,
       '#p': users
+    }, {
+      kinds: [3],
+      authors: users,
+      '#p': users
     }]
-    let events = await pool.list(getReadRelays(), filters)
-    events.forEach(e => {
-      if (e.kind === 1984) {
-        if (e.tags.find(t => t[0] === 'p')[1] in window.myFollows) {
-          window.myFollows[e.tags.find(t => t[0] === 'p')[1]].reportedBy.push(e.pubkey)
+    for (let filter of filters) {
+      let events = await pool.list(getReadRelays(), [filter])
+      //console.log('users-', users)
+      console.log('events-', events)
+      events.forEach(e => {
+        if (e.kind === 1984) {
+          if (e.tags.find(t => t[0] === 'p')[1] in window.myFollows) {
+            window.myFollows[e.tags.find(t => t[0] === 'p')[1]].reportedBy.push(e.pubkey)
+          }
+        } else if (e.kind === 3) {
+          e.tags.filter(t => t[0] === 'p').forEach(t => {
+            window.myFollows[t[1]]?.followedBy.push(e.pubkey)
+          })
+        } else {
+          e.tags.filter(t => t[0] === 'p').forEach(t => {
+            window.myFollows[t[1]]?.mutedBy.push(e.pubkey)
+          })
         }
-      } else {
-        e.tags.filter(t => t[0] === 'p').forEach(t => {
-          window.myFollows[t[1]]?.mutedBy.push(e.pubkey)
-        })
-      }
-    })
+      })
+    }
   }
 
   async function loadData() {
@@ -203,6 +216,9 @@ function App() {
       })
       f.reportedBy.forEach(u => {
         if (profiles[u]) profiles[k]?.distrust.add('reported by ' + profiles[u].name)
+      })
+      f.followedBy.forEach(u => {
+        if (profiles[u] && profiles[k]) profiles[k].followers++
       })
     })
     setContacts(c => {
@@ -227,7 +243,9 @@ function App() {
               <Link to={'/' + c.npub}>
                 <img src={c.picture} alt="" width={100}/>
               </Link>
-              {' '}{c.name}
+              {' '} {c.name}
+              <br/> {Math.floor(100 * c.followers / (c.distrust.size + c.followers))}%
+              {' '} trusted {c.followers} followers
               {[...c.distrust].map(d => <div key={d}>
                 <small><small>{d}</small></small>
               </div>)}
