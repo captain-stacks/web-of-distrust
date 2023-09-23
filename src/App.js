@@ -224,7 +224,10 @@ function App() {
     setContacts(c => {
       console.log('contacts', c)
       console.log('filtered', [...c].filter(c => c.distrust.size))
-      return [...c].filter(c => c.distrust.size)
+      c = [...c].filter(c => c.distrust.size)
+      c.forEach(c => c.score = Math.floor(100 * c.followers / (c.distrust.size + c.followers)))
+      c.sort((a, b) => a.score - b.score)
+      return c
     })
   }
 
@@ -244,7 +247,7 @@ function App() {
                 <img src={c.picture} alt="" width={100}/>
               </Link>
               {' '} {c.name}
-              <br/> {Math.floor(100 * c.followers / (c.distrust.size + c.followers))}%
+              <br/> {c.score}%
               {' '} trusted {c.followers} followers
               {[...c.distrust].map(d => <div key={d}>
                 <small><small>{d}</small></small>
